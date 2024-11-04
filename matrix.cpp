@@ -38,6 +38,17 @@ public:
 				}
 		}
 	}
+	matrix(const matrix& m) {
+		rows = m.rows;
+		cols = m.cols;
+		array = new T * [rows];
+		for (int i = 0; i < rows; ++i) {
+			array[i] = new T[cols]
+				for (int j = 0; j < cols; ++j) {
+					array[i][j] = m.array[i][j];
+				}
+		}
+	}
 	~matrix() {
 		for (int i = 0; i < rows; ++i) {
 			delete[] array[i];
@@ -117,4 +128,28 @@ public:
 			}
 		}
 	}
+	matrix operator = (const matrix& m) {
+		return matrix(m);
+	}
+	T trace() {
+		if (rows != cols) {
+			throw std::invalid_argument("The trace can only be calculated for a square matrix");
+		}
+		T sum = 0;
+		for (int i = 0; i < rows; ++i) {
+			sum += array[i][i]
+		}
+		retirn sum;
+	}
+	ostream& operator << (std::ostream& os, const matrix& m)
+	{
+		for (int i = 0; i < rows; ++i) {
+			for (int j = 0; j < cols; ++j) {
+				os << array[i][j] << ' ';
+			}
+			os << '\n';
+		}
+		return os
+	}
+
 };
