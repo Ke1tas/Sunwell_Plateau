@@ -156,7 +156,7 @@ public:
 			throw std::invalid_argument("Matrices of size 3*1 are required to calculate their coplanarity");
 		}
 		double det = *this(0, 0) * (m1(1, 0) * m2(2, 0) - m1(2, 0) * m2(1, 0)) -
-			*this(1, 0) * (m1(2, 0) * m2(0, 0) - m1(0, 0) * m2(2, 0)) +
+			*this(1, 0) * (m1(0, 0) * m2(2, 0) - m1(2, 0) * m2(0, 0)) +
 			*this(2, 0) * (m1(0, 0) * m2(1, 0) - m1(1, 0) * m2(0, 0));
 		return abs(det) < EPSILON;
 	}
