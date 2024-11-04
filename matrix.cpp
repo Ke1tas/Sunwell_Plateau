@@ -151,5 +151,13 @@ public:
 		}
 		return os
 	}
-
+	bool coplanar(const matrix& m1, const matrix& m2) {
+		if (rows != 3 || m1.rows != 3 || m2.rows != 3 || cols != 1 || m1.cols != 1 || m2.cols != 1) {
+			throw std::invalid_argument("Matrices of size 3*1 are required to calculate their coplanarity");
+		}
+		double det = *this(0, 0) * (m1(1, 0) * m2(2, 0) - m1(2, 0) * m2(1, 0)) -
+			*this(1, 0) * (m1(2, 0) * m2(0, 0) - m1(0, 0) * m2(2, 0)) +
+			*this(2, 0) * (m1(0, 0) * m2(1, 0) - m1(1, 0) * m2(0, 0));
+		return abs(det) < EPSILON;
+	}
 };
