@@ -4,13 +4,14 @@
 
 using namespace std;
 
+static constexpr double EPSILON = 1e-5;
+
 template <typename T>
 
 class matrix {
 private:
 	size_t _rows,_cols;
 	T** _array;
-	static constexpr double EPSILON = 1e-5;
 	void _deallocate_memory() {
 		for (int i = 0; i < _rows; ++i) {
 			delete[] _array[i];
@@ -85,7 +86,7 @@ public:
 		}
 		return _array[row][col];
 	}
-	matrix operator + (const matrix& m) {
+	matrix operator + (const matrix& m) const {
 		if (_rows != m._rows || _cols != m._cols) {
 			throw std::invalid_argument("The matrix sizes must match for the addition");
 		}
@@ -168,19 +169,20 @@ public:
 		return sum;
 	}
 
-	bool coplanar(const matrix& m1, const matrix& m2) {
-		if (_rows != 3 || m1._rows != 3 || m2._rows != 3 || _cols != 1 || m1._cols != 1 || m2._cols != 1) {
-			throw std::invalid_argument("Matrices of size 3*1 are required to calculate their coplanarity");
-		}
-		double det = (*this)(0, 0) * (m1(1, 0) * m2(2, 0) - m1(2, 0) * m2(1, 0)) -
-			(*this)(1, 0) * (m1(0, 0) * m2(2, 0) - m1(2, 0) * m2(0, 0)) +
-			(*this)(2, 0) * (m1(0, 0) * m2(1, 0) - m1(1, 0) * m2(0, 0));
-		return abs(det) < EPSILON;
-	}
 
 	size_t rows() const{ return _rows; }
 	size_t cols() const { return _cols; }
 };
+template <typename T>
+bool coplanar(const matrix<T>& m1, const matrix<T>& m2, const matrix<T>& m3) {
+	if (m3.rows() != 3 || m1.rows() != 3 || m2.rows() != 3 || m3.cols() != 1 || m1.cols() != 1 || m2.cols() != 1) {
+		throw std::invalid_argument("Matrices of size 3*1 are required to calculate their coplanarity");
+	}
+	double det = m3(0, 0) * (m1(1, 0) * m2(2, 0) - m1(2, 0) * m2(1, 0)) -
+		m3(1, 0) * (m1(0, 0) * m2(2, 0) - m1(2, 0) * m2(0, 0)) +
+		m3(2, 0) * (m1(0, 0) * m2(1, 0) - m1(1, 0) * m2(0, 0));
+	return abs(det) < EPSILON;
+}
 
 template <typename T>
 ostream& operator << (std::ostream& os, const matrix<T>& m)
@@ -237,13 +239,13 @@ matrix<int> m5(3, 1, 2);
 matrix<int> m6(3, 1, 3);
 cout << m4 << m5 << m6;
 cout << m4 - m5 << m4 + m6;
-cout << m4.coplanar(m5, m6) << '\n';
+cout << coplanar(m5, m6, m4) << '\n';
 matrix<int> m7(3, 1, 10, 100);
-m7(0, 0) = 1; m7(2, 0) = 2; m7(2, 0) = 3;
+m7(0, 0) = 1; m7(1, 0) = 2; m7(2, 0) = 3;
 matrix<int> m8(3, 1, 10, 100);
-m8(0, 0) = 1; m8(2, 0) = 2; m8(2, 0) = 4;
+m8(0, 0) = 1; m8(1, 0) = 2; m8(2, 0) = 4;
 matrix<int> m9(3, 1, 10, 100);
-m9(0, 0) = 1; m9(2, 0) = 2; m9(2, 0) = 5;
+m9(0, 0) = 1; m9(1, 0) = 3; m9(2, 0) = 5;
 cout << m7;
-cout << m7.coplanar(m8, m9) << '\n';
+cout << coplanar(m8, m9, m7) << '\n';
 }
