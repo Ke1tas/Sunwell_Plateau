@@ -1,5 +1,6 @@
 #include <iostream>
 #include <random>
+#include <stdexcept>
 
 using namespace std;
 
@@ -10,6 +11,19 @@ private:
 	size_t _rows,_cols;
 	T** _array;
 	static constexpr double EPSILON = 1e-5;
+	void _deallocate_memory() {
+		for (int i = 0; i < _rows; ++i) {
+			delete[] _array[i];
+		}
+		delete[] _array;
+		cout << "matrix deleted" << '\n';
+	}
+	void _allocate_memory() {
+		_array = new T * [_rows];
+		for (size_t i = 0; i < _rows; ++i) {
+			_array[i] = new T[_cols];
+		}
+	}
 public:
 	matrix(const size_t row, const size_t col,const T& num = 0) {
 		if (row == 0 || col == 0) {
@@ -57,11 +71,7 @@ public:
 		cout << "matrix created" << '\n';
 	}
 	~matrix() {
-		for (int i = 0; i < _rows; ++i) {
-			delete[] _array[i];
-		}
-		delete[] _array;
-		cout << "matrix deleted" << '\n';
+		_deallocate_memory();
 	}
 	T& operator () (size_t row, size_t col) {
 		if (row >= _rows || col >= _cols) {
@@ -108,7 +118,7 @@ public:
 		for (int i = 0; i < _rows; ++i) {
 			for (int j = 0; j < m._cols; ++j) {
 				for (int k = 0; k < _cols; ++k) {
-					res(i,j) += array[i][k] * m(k,j);
+					res(i,j) += _array[i][k] * m(k,j);
 				}
 			}
 		}
@@ -118,7 +128,7 @@ public:
 		matrix res(_rows, _cols);
 		for (int i = 0; i < _rows; ++i) {
 			for (int j = 0; j < _cols; ++j) {
-				res(i,j) = array[i][j] * num;
+				res(i,j) = _array[i][j] * num;
 			}
 		}
 		return res;
@@ -131,13 +141,21 @@ public:
 		matrix res(_rows, _cols);
 		for (int i = 0; i < _rows; ++i) {
 			for (int j = 0; j < _cols; ++j) {
-				res(i, j) = *this(i,j) / num;
+				res(i, j) = _array[i][j] / num;
 			}
 		}
 		return res;
 	}
-	matrix operator = (const matrix& m) {
-		return matrix(m);
+	void operator = (const matrix& m) {
+		_deallocate_memory();
+		_rows = m._rows;
+		_cols = m._cols;
+		_allocate_memory();
+		for (int i = 0; i < _rows; ++i) {
+			for (int j = 0; j < _cols; ++j) {
+				_array[i][j] = m(i, j);
+			}
+		}
 	}
 	T trace() {
 		if (_rows != _cols) {
@@ -145,7 +163,7 @@ public:
 		}
 		T sum = 0;
 		for (int i = 0; i < _rows; ++i) {
-			sum += array[i][i];
+			sum += _array[i][i];
 		}
 		return sum;
 	}
@@ -154,9 +172,9 @@ public:
 		if (_rows != 3 || m1._rows != 3 || m2._rows != 3 || _cols != 1 || m1._cols != 1 || m2._cols != 1) {
 			throw std::invalid_argument("Matrices of size 3*1 are required to calculate their coplanarity");
 		}
-		double det = *this(0, 0) * (m1(1, 0) * m2(2, 0) - m1(2, 0) * m2(1, 0)) -
-			*this(1, 0) * (m1(0, 0) * m2(2, 0) - m1(2, 0) * m2(0, 0)) +
-			*this(2, 0) * (m1(0, 0) * m2(1, 0) - m1(1, 0) * m2(0, 0));
+		double det = (*this)(0, 0) * (m1(1, 0) * m2(2, 0) - m1(2, 0) * m2(1, 0)) -
+			(*this)(1, 0) * (m1(0, 0) * m2(2, 0) - m1(2, 0) * m2(0, 0)) +
+			(*this)(2, 0) * (m1(0, 0) * m2(1, 0) - m1(1, 0) * m2(0, 0));
 		return abs(det) < EPSILON;
 	}
 
@@ -178,7 +196,7 @@ ostream& operator << (std::ostream& os, const matrix<T>& m)
 
 template <typename T>
 matrix<T> operator * (const T& num, const matrix<T>& m) {
-	matrix res(m.rows(), m.cols());
+	matrix<T> res(m.rows(), m.cols());
 	for (int i = 0; i < m.rows(); ++i) {
 		for (int j = 0; j < m.cols(); ++j) {
 			res(i, j) = m(i,j) * num;
@@ -188,10 +206,44 @@ matrix<T> operator * (const T& num, const matrix<T>& m) {
 }
 
 int main() {
-	matrix<int> m(3, 5, 10, 20);
-	matrix<int> m1(3, 5, 1);
-	cout << m;
-	cout << m1;
-	m1 = m;
-	cout << m1;
+
+matrix<int> m(3, 5, 10, 20);
+matrix<int> m1(3, 5, 1);
+matrix<int> m2(5, 5, 6);
+matrix<int> m3(1, 3, 1);
+cout << m;
+cout << m1;
+cout << m2;
+try {
+	cout << m1.trace();
+}
+catch (logic_error e) {
+	cerr << e.what();
+}
+cout << m2.trace() << '\n';
+m2 = m1*2;
+cout << m2;
+m2 = 4*m1;
+cout << m2;
+m2 = m2 / 2;
+cout << m2;
+cout << m3;
+cout << m3 * m1;
+m3(0, 2) = 8;
+cout << m3;
+cout << m3(0, 0) << '\n';
+matrix<int> m4(3, 1, 1);
+matrix<int> m5(3, 1, 2);
+matrix<int> m6(3, 1, 3);
+cout << m4 << m5 << m6;
+cout << m4 - m5 << m4 + m6;
+cout << m4.coplanar(m5, m6) << '\n';
+matrix<int> m7(3, 1, 10, 100);
+m7(0, 0) = 1; m7(2, 0) = 2; m7(2, 0) = 3;
+matrix<int> m8(3, 1, 10, 100);
+m8(0, 0) = 1; m8(2, 0) = 2; m8(2, 0) = 4;
+matrix<int> m9(3, 1, 10, 100);
+m9(0, 0) = 1; m9(2, 0) = 2; m9(2, 0) = 5;
+cout << m7;
+cout << m7.coplanar(m8, m9) << '\n';
 }
